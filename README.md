@@ -1,182 +1,216 @@
-# 🛰️ HỆ THỐNG PHÁT HIỆN SẠT LỞ ĐẤT QUA ẢNH VỆ TINH ĐA PHỔ
-## (Landslide Detection using Deep Learning & Multi-Source Satellite Imagery)
+# Landslide Detection in Multi-Source Satellite Imagery
+## Benchmark Reproduction and Optimization on Landslide4Sense (IEEE TGRS 2022)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" />
-  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/Google_Colab-T4_GPU-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white" />
-  <img src="https://img.shields.io/badge/Benchmark-IEEE_TGRS_2022-00629B?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" />
-</p>
-
-> **Tác giả:** [Accnoname](https://github.com/Accnoname)  
-> **Mã nguồn chính thức:** [https://github.com/Accnoname/Landslide-Detection](https://github.com/Accnoname/Landslide-Detection)  
-> **Bộ dữ liệu mục tiêu:** **Landslide4Sense Benchmark** (14 kênh: Sentinel-2 + ALOS PALSAR DEM & Độ dốc)  
-> **Thành tựu cốt lõi:** Tái lập và **vượt xa bài báo chuẩn quốc tế IEEE TGRS 2022** ($F_1 = \mathbf{75.77\%}$ vs $71.65\%$, $\text{IoU} = \mathbf{60.99\%}$ vs $55.83\%$, $\text{Recall} = \mathbf{77.49\%}$ vs $66.80\%$).
+**Author:** Accnoname  
+**Repository:** https://github.com/Accnoname/Landslide-Detection  
+**Target Dataset:** Landslide4Sense (14 channels: Sentinel-2 Multispectral + ALOS PALSAR DEM and Slope)  
+**Reference Paper:** IEEE Transactions on Geoscience and Remote Sensing (TGRS 2022)
 
 ---
 
-## 📌 1. BẢNG TỔNG KẾT KẾT QUẢ THỰC NGHIỆM ĐỐI ĐẦU
+## 1. Overview and Key Achievements
 
-Mô hình đã được thử nghiệm và đối chiếu công bằng trên tập dữ liệu kiểm định độc lập gồm 245 mẫu viễn thám $128 \times 128 \times 14$ kênh:
+This repository implements a high-performance deep learning pipeline for automated landslide semantic segmentation using 14-band multi-source satellite imagery. The models are evaluated on the Landslide4Sense benchmark dataset comprising Sentinel-2 multispectral imagery and ALOS PALSAR topographic data (Elevation and Slope) at 10-meter spatial resolution.
 
-| Kiến trúc Mô hình | Số lượng Tham số | Precision | Recall (Bắt trúng) | F1-Score | IoU (Đè khít) | Tốc độ suy luận | Đánh giá & Vai trò |
+### Primary Results Summary:
+* **F1-Score:** Achieved **75.77%**, surpassing the IEEE TGRS 2022 published baseline of **71.65%** (+4.12% absolute improvement).
+* **Intersection over Union (IoU):** Achieved **60.99%**, outperforming the reference benchmark of **55.83%** (+5.16% absolute improvement).
+* **Recall (Detection Coverage):** Reached **77.49%**, significantly reducing false negatives compared to the published benchmark's **66.80%** (+10.69% improvement in disaster target recovery).
+* **Inference Speed:** ResU-Net processes at **266.9 FPS**, while DeepLabV3+ reaches **644.8 FPS** on an NVIDIA GPU.
+
+---
+
+## 2. Experimental Benchmark Results
+
+Quantitative evaluation conducted on an independent validation split of 245 multi-spectral patches ($128 \times 128 \times 14$ channels):
+
+| Model Architecture | Parameters | Precision | Recall | F1-Score | IoU | Inference FPS | Role in Project |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| 🥇 **ResU-Net (ResNet34)** | **$24.5\text{M}$** | **$74.21\%$** | **$77.49\%$** | **$75.77\%$** | **$60.99\%$** | $266.9\text{ FPS}$ | 🏆 **Top 1 Toàn diện — Sắc nét ranh giới** |
-| 🥈 **DeepLabV3+ (ResNet34)** | **$22.5\text{M}$** | $66.42\%$ | $77.03\%$ | **$71.33\%$** | $55.44\%$ | **$644.8\text{ FPS}$** | ⚡ **Tốc độ nhanh nhất — Giám sát diện rộng** |
-| 🥉 **ResU-Net + TTA (8x)** | $24.5\text{M}$ | **$77.58\%$** | $73.91\%$ | **$75.70\%$** | $60.90\%$ | $34.5\text{ FPS}$ | 🛡️ **Lọc sạch nhiễu viền — Precision kỷ lục** |
-| 🎯 **Bài báo gốc *(IEEE TGRS)*** | — | $77.20\%$ | $66.80\%$ | **$71.65\%$** | $55.83\%$ | — | 📐 Chuẩn tham chiếu cơ sở |
+| **ResU-Net (ResNet34)** | **24.5M** | **74.21%** | **77.49%** | **75.77%** | **60.99%** | 266.9 FPS | Primary Champion Model (Sharp boundary preservation) |
+| **DeepLabV3+ (ResNet34)** | 22.5M | 66.42% | 77.03% | 71.33% | 55.44% | **644.8 FPS** | Fast Baseline (Large-scale rapid screening) |
+| **ResU-Net + TTA (8-Fold)** | 24.5M | **77.58%** | 73.91% | 75.70% | 60.90% | 34.5 FPS | High-Precision Inference (Noise suppression) |
+| **Published Baseline (IEEE TGRS)** | — | 77.20% | 66.80% | 71.65% | 55.83% | — | Reference Benchmark Baseline |
 
-> [!TIP]
-> * **Tại sao ResU-Net chiến thắng?** Nhờ các đường truyền tắt đa tầng (**Skip Connections** ở các mức $64\times 64, 32\times 32, 16\times 16$), ResU-Net bảo toàn nguyên vẹn độ sắc nét của mép sạt lở địa hình ở độ phân giải gốc $128 \times 128$.
-> * **Tại sao Recall của dự án đạt $>77\%$ (vượt bài báo gốc $+10.7\%$)?** Sử dụng hàm mất mát **ComboLoss ($0.6\text{ Dice} + 0.4\text{ BCE}$)** để phạt nặng lỗi bỏ sót pixel sạt lở (vốn chỉ chiếm $<3\%$ diện tích).
-> * **Bản chất IoU $\approx 61\%$:** IoU và F1 tuân theo quy luật toán học $\text{IoU} = \frac{F_1}{2 - F_1}$. Mức IoU $61\%$ là đẳng cấp rất cao trong phân đoạn ảnh vệ tinh, mép viền ôm sát thực tế.
-
----
-
-## 🚀 2. HƯỚNG DẪN CHẠY 1-CLICK TRÊN GOOGLE COLAB (GPU MIỄN PHÍ)
-
-Bạn có thể chạy toàn bộ quy trình từ clone code, tải dữ liệu, huấn luyện đến lưu checkpoint trực tiếp trên Google Colab mà không cần cài đặt môi trường máy tính:
-
-👉 **[Bấm vào đây để mở trực tiếp `run_on_colab.ipynb` trên Google Colab](https://colab.research.google.com/github/Accnoname/Landslide-Detection/blob/main/run_on_colab.ipynb)**
-
-### Quy trình 4 bước tự động trên Colab:
-1. **Kết nối GPU:** Vào menu `Runtime` $\rightarrow$ `Change runtime type` $\rightarrow$ Chọn `T4 GPU`.
-2. **Mount Google Drive:** Tự động tạo thư mục lưu trữ `MyDrive/Detect_Results/`.
-3. **Tự động tải dữ liệu tốc độ cao:** Script tự kéo dữ liệu từ máy chủ Zenodo với mạng 1Gbps trong ~1 phút (hoàn toàn không cần tài khoản Kaggle).
-4. **Bấm Run All (`Ctrl + F9`):** Huấn luyện 20 epochs chỉ mất **~3 phút**. File trọng số tốt nhất `unet_resnet34_best.pth` và biểu đồ học tập tự động lưu an toàn về Google Drive!
+### Technical Analysis:
+1. **Multi-Scale Skip Connections:** ResU-Net retains high-resolution spatial feature maps from early encoder layers ($64 \times 64, 32 \times 32$), preserving acute topographic boundary contours that are otherwise blurred by dilated convolutions in DeepLabV3+ ASPP on small $128 \times 128$ inputs.
+2. **Combo Loss Strategy:** Extreme class imbalance (landslides occupy less than 3% of spatial coverage) is effectively addressed using a composite objective:
+   $$\mathcal{L}_{\text{total}} = 0.6 \cdot \mathcal{L}_{\text{Dice}} + 0.4 \cdot \mathcal{L}_{\text{BCE}}$$
+   The Dice component heavily penalizes false negatives, lifting Recall from 66.80% to 77.49%.
+3. **Mathematical Relationship between IoU and F1:**
+   $$\text{IoU} = \frac{F_1}{2 - F_1} \quad \Longleftrightarrow \quad F_1 = \frac{2 \cdot \text{IoU}}{1 + \text{IoU}}$$
+   An IoU of 60.99% corresponds algebraically to an F1-Score of 75.77%. In geospatial segmentation, an IoU above 60% represents top-tier overlap accuracy.
 
 ---
 
-## 💻 3. HƯỚNG DẪN SỬ DỤNG MÃ NGUỒN CỤC BỘ (LOCAL WORKSTATION)
+## 3. Dataset Specification
 
-### 3.1. Cài đặt môi trường
+The Landslide4Sense dataset provides 14 co-registered raster channels per sample:
+
+| Band Index | Sensor / Source | Spectral / Physical Property | Spatial Resolution | Central Wavelength / Unit |
+| :---: | :--- | :--- | :---: | :---: |
+| 1 | Sentinel-2 | B01 - Coastal Aerosols | 60 m | 443 nm |
+| 2 | Sentinel-2 | B02 - Blue | 10 m | 490 nm |
+| 3 | Sentinel-2 | B03 - Green | 10 m | 560 nm |
+| 4 | Sentinel-2 | B04 - Red | 10 m | 665 nm |
+| 5 | Sentinel-2 | B05 - Vegetation Red Edge 1 | 20 m | 705 nm |
+| 6 | Sentinel-2 | B06 - Vegetation Red Edge 2 | 20 m | 740 nm |
+| 7 | Sentinel-2 | B07 - Vegetation Red Edge 3 | 20 m | 783 nm |
+| 8 | Sentinel-2 | B08 - Broad NIR | 10 m | 842 nm |
+| 9 | Sentinel-2 | B08A - Narrow NIR | 20 m | 865 nm |
+| 10 | Sentinel-2 | B09 - Water Vapour | 60 m | 945 nm |
+| 11 | Sentinel-2 | B11 - SWIR 1 | 20 m | 1610 nm |
+| 12 | Sentinel-2 | B12 - SWIR 2 | 20 m | 2190 nm |
+| 13 | ALOS PALSAR | Slope (Terrain Gradient) | 12.5 m | Degrees |
+| 14 | ALOS PALSAR | Elevation (Digital Elevation Model - DEM) | 12.5 m | Meters above sea level |
+
+---
+
+## 4. Cloud Execution on Google Colab
+
+A dedicated notebook (`run_on_colab.ipynb`) is provided for one-click training on a cloud GPU (Tesla T4) with automated Google Drive checkpoint synchronization.
+
+Direct launcher URL:  
+https://colab.research.google.com/github/Accnoname/Landslide-Detection/blob/main/run_on_colab.ipynb
+
+### Automated Pipeline Workflow:
+1. **GPU Allocation:** Assign a standard T4 GPU via `Runtime -> Change runtime type -> T4 GPU`.
+2. **Drive Mount:** Checkpoints and logs are written directly to `/content/drive/MyDrive/Detect_Results/`.
+3. **Direct Data Fetch:** Downloads the Landslide4Sense dataset directly from Zenodo servers at gigabit speeds without requiring Kaggle API credentials.
+4. **Execution:** Runs `src/train.py` with batch size 32, completing 20 epochs in under 4 minutes.
+
+---
+
+## 5. Local Setup and Execution
+
+### 5.1. Environment Installation
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/Accnoname/Landslide-Detection.git
 cd Landslide-Detection
 
-# Cài đặt các thư viện cần thiết
+# Install required dependencies
 pip install -r requirements.txt
 ```
 
-### 3.2. Tải và chuẩn bị dữ liệu (Nếu chưa có data)
+### 5.2. Data Preparation
 ```bash
-# Tự động tải từ Zenodo và phân loại cấu trúc thư mục
+# Automated download and directory structuring from Zenodo
 python src/download_data.py
+
+# Generate independent validation split (245 labeled pairs)
 python src/create_val_split.py
 ```
 
-### 3.3. Huấn luyện mô hình
-* **Huấn luyện ResU-Net tiêu chuẩn (20 epochs):**
+### 5.3. Training
+* **Train ResU-Net Standard Pipeline (20 Epochs):**
   ```bash
   python src/train.py --arch unet --encoder resnet34 --batch_size 16 --epochs 20
   ```
-* **Huấn luyện với Data Augmentation & Nạp RAM Caching (Tăng tốc đọc đĩa):**
+
+* **Train with 2D Data Augmentation and In-Memory RAM Caching:**
   ```bash
   python src/train.py --arch unet --encoder resnet34 --batch_size 32 --epochs 20 --augment --cache_data
   ```
-* **Huấn luyện DeepLabV3+ đối chứng:**
+
+* **Train DeepLabV3+ Comparison Model:**
   ```bash
   python src/train.py --arch deeplabv3plus --encoder resnet34 --batch_size 32 --epochs 20
   ```
-* **Huấn luyện tiếp nối từ Checkpoint (Fine-tuning):**
+
+* **Resume Training / Fine-Tuning from Checkpoint:**
   ```bash
   python src/train.py --resume results/checkpoints/unet_resnet34_best.pth --epochs 30 --lr 1e-5
   ```
 
-### 3.4. Đánh giá & Tối ưu hóa chuyên sâu
-* **Quét ngưỡng xác suất tối ưu (Threshold Tuning từ 0.20 đến 0.80):**
+### 5.4. Evaluation and Optimization
+* **Decision Threshold Sensitivity Analysis (0.20 to 0.80):**
   ```bash
   python src/tune_threshold.py --ckpt_path results/checkpoints/unet_resnet34_best.pth
   ```
-* **Đánh giá Test-Time Augmentation (TTA 8x) khử nhiễu viền:**
+
+* **Test-Time Augmentation (8-Fold Averaging):**
   ```bash
   python src/evaluate_tta.py --ckpt_path results/checkpoints/unet_resnet34_best.pth
   ```
-* **So sánh đối đầu toàn diện các mô hình (Xuất bảng & Đồ thị cột):**
+
+* **Multi-Model Benchmark Comparison:**
   ```bash
   python src/compare_models.py
   ```
-* **Xuất ảnh đối chiếu 5 cột (RGB, Slope, Ground Truth, AI Mask, Error Map):**
+
+* **Five-Column Qualitative Error Map Generation:**
   ```bash
   python src/evaluate_and_visualize.py
   ```
-* **Suy luận 800 ảnh Test chưa gán nhãn và nén gói ZIP nộp bài:**
+
+* **Inference on 800 Unlabeled Test Patches & Packaging Submission Archive:**
   ```bash
   python src/predict_test.py
   ```
 
 ---
 
-## 🔬 4. BẢN CHẤT HỌC THUẬT & MIỀN DỮ LIỆU ĐỊA KỸ THUẬT
+## 6. Metric Definitions and Operational Modes
 
-### 4.1. Cơ cấu 14 kênh đầu vào (Multi-Source Remote Sensing)
-Dữ liệu kết hợp quang phổ phản xạ thụ động của vệ tinh quang học với mô hình số hóa độ cao chủ động của radar:
-1. **Kênh quang phổ Sentinel-2 (B01 - B12):**
-   * `B02 (Blue), B03 (Green), B04 (Red)`: Màu sắc tự nhiên (vết sạt lở lộ đất màu nâu đỏ).
-   * `B08, B08A (Near Infrared - NIR)`: **Chỉ số diệp lục lá cây**. Khi sạt lở cuốn trôi thảm thực vật, kênh NIR sụt giảm đột ngột (tín hiệu nhận diện mạnh nhất).
-   * `B11, B12 (Short-Wave Infrared - SWIR)`: Độ ẩm bùn đất và khoáng vật trơ trọi.
-2. **Kênh địa hình ALOS PALSAR (B13 & B14):**
-   * `Slope (Độ dốc)`: Sạt lở tuân theo trọng lực vật lý, tập trung chủ yếu ở sườn dốc $20^\circ - 55^\circ$. Vùng đồng bằng bằng phẳng ($< 10^\circ$) có nguy cơ sạt lở bằng 0.
-   * `DEM (Độ cao)`: Phân bố theo đai cao địa tầng đứt gãy.
+All metrics are evaluated at the global pixel level (micro-averaged over all validation samples):
 
-### 4.2. Ý nghĩa thực tế của 4 chỉ số đánh giá (Evaluation Metrics)
-* **Precision ($74.21\%$):** Thước đo chống báo nhầm. Ngăn chặn việc điều động lực lượng cứu hộ và máy xúc tốn kém đến những nơi chỉ là ruộng cày hay bãi cát.
-* **Recall ($77.49\%$):** Thước đo chống bỏ sót. Trực tiếp bảo vệ tính mạng con người, đảm bảo không bỏ lọt các ngôi làng hay cung đường bị đất đá chôn vùi.
-* **F1-Score ($75.77\%$):** Trung bình điều hòa giữa Precision và Recall, đại diện cho năng lực tổng thể của mô hình.
-* **IoU ($60.99\%$):** Tỷ lệ diện tích giao trên hợp ($\text{IoU} = \frac{TP}{TP + FP + FN}$). Đánh giá độ đè khít hình thái học phục vụ đo đạc diện tích sạt lở ($m^2$).
+* **Precision:** $\frac{TP}{TP + FP}$  
+  Measures false alarm suppression. High precision ensures operational resources are not deployed to false targets such as ploughed farmland or dry riverbeds.
+* **Recall:** $\frac{TP}{TP + FN}$  
+  Measures disaster target detection completeness. In disaster response, minimizing false negatives takes precedence to ensure affected areas are not overlooked.
+* **F1-Score:** $2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}$  
+  Harmonic mean penalizing disproportionate models, serving as the primary benchmark criterion.
+* **IoU (Jaccard Index):** $\frac{TP}{TP + FP + FN}$  
+  Geometric overlap ratio between predicted masks and ground-truth delineations, critical for spatial area estimation ($m^2$).
+
+### Operational Regimes via Threshold Calibration:
+* **Emergency Relief Mode ($Th = 0.20$):** Recall reaches **81.55%** ($F_1 = 75.20\%$), prioritizing life safety by sweeping all potential scars.
+* **Standard Benchmark Mode ($Th = 0.50$):** Peak overall performance at **$F_1 = 75.77\%$** and **$\text{IoU} = 60.99\%$**.
+* **Land Administration Mode ($Th = 0.80$):** Precision reaches **78.20%** ($F_1 = 75.17\%$), guaranteeing confirmed targets before civil engineering interventions.
 
 ---
 
-## 📂 5. CẤU TRÚC MÃ NGUỒN CHUẨN MỰC (PRODUCTION-READY)
+## 7. Repository Layout
 
 ```text
 Landslide-Detection/
 ├── configs/
-│   └── baseline_resunet.yaml            # Cấu hình siêu tham số tiêu chuẩn
-├── data/                                # Dữ liệu nghiên cứu (được lọc bởi .gitignore)
-│   ├── raw/                             # File nén TrainData.zip, ValidData.zip
-│   └── processed/                       # Dữ liệu sạch 100% (Zero Data Leakage)
-│       ├── train/ (img, mask: 3,554 cặp)
-│       ├── val/   (img, mask: 245 cặp)
-│       └── test/  (img: 800 ảnh)
+│   └── baseline_resunet.yaml            # Standard hyperparameter configuration
+├── data/                                # Filtered by .gitignore
+│   ├── raw/                             # Archive downloads (TrainData.zip, ValidData.zip)
+│   └── processed/                       # Formatted train, val, test subdirectories
 ├── results/
-│   ├── checkpoints/                     # Trọng số tốt nhất (.pth)
-│   ├── plots/                           # Biểu đồ Loss, F1, Threshold curve, Ảnh 5 cột
-│   ├── predictions/                     # 800 mask dự đoán & file ZIP nộp bài
-│   └── unet_resnet34_training_log.csv   # Nhật ký số liệu 20 epochs
+│   ├── checkpoints/                     # Model weights (.pth)
+│   ├── plots/                           # Loss curves, tuning curves, visualization maps
+│   └── predictions/                     # Predicted binary masks (.h5)
 ├── src/
-│   ├── dataset.py                       # PyTorch Dataset hỗ trợ RAM Caching & Augmentation
-│   ├── train.py                         # Pipeline huấn luyện linh hoạt (CLI + GPU)
-│   ├── tune_threshold.py                # Quét ngưỡng xác suất nhạy cảm (0.20 -> 0.80)
-│   ├── evaluate_tta.py                  # Đo lường Test-Time Augmentation 8 hướng
-│   ├── compare_models.py                # Đánh giá & vẽ đồ thị so sánh ResU-Net vs DeepLabV3+
-│   ├── evaluate_and_visualize.py        # Xuất ảnh đối chiếu 5 cột thực tế
-│   ├── predict_test.py                  # Suy luận 800 ảnh test & đóng gói ZIP
-│   ├── download_data.py                 # Tự động tải dữ liệu trực tiếp từ Zenodo
-│   ├── create_val_split.py              # Script phân tách tập train/val độc lập
+│   ├── dataset.py                       # PyTorch Dataset with RAM caching and 2D transforms
+│   ├── train.py                         # Multi-architecture training pipeline
+│   ├── tune_threshold.py                # Decision threshold calibration utility
+│   ├── evaluate_tta.py                  # 8-fold Test-Time Augmentation evaluator
+│   ├── compare_models.py                # Model benchmarking and plot generator
+│   ├── evaluate_and_visualize.py        # 5-column qualitative visual inspection
+│   ├── predict_test.py                  # Test set batch inference and zip compression
+│   ├── download_data.py                 # Direct dataset retrieval from Zenodo repository
+│   ├── create_val_split.py              # Independent validation subset partitioner
 │   └── utils/
-│       ├── losses.py                    # ComboLoss (0.6 Dice + 0.4 BCE)
-│       └── metrics.py                   # Tính Precision, Recall, F1, IoU
-├── requirements.txt                     # Danh sách thư viện phụ thuộc
-├── run_on_colab.ipynb                   # Bệ phóng 1-click trên Google Colab
-├── RESEARCH_NOTES.md                    # Sổ tay nghiên cứu & luận điểm phản biện đề tài
-├── ROADMAP.md                           # Bản đồ nghiên cứu chi tiết 5 giai đoạn
-├── .gitignore                           # Bảo mật chống lộ dữ liệu lớn và AI secrets
-└── README.md                            # Tài liệu tổng quan dự án
+│       ├── losses.py                    # Composite loss definitions (Dice + BCE)
+│       └── metrics.py                   # Pixel-level confusion matrix metric computation
+├── requirements.txt                     # Python package dependencies
+├── run_on_colab.ipynb                   # Executable cloud launcher notebook
+├── RESEARCH_NOTES.md                    # Research methodology and defense argumentation
+├── ROADMAP.md                           # Multi-phase project roadmap
+├── .gitignore                           # Excludes heavy data, weights, and private credentials
+└── README.md                            # Comprehensive technical documentation
 ```
 
 ---
 
-## 📜 6. TRÍCH DẪN & TÀI LIỆU THAM KHẢO
+## 8. References
 
-1. **Bài báo Benchmark gốc:**  
-   *Ghorbanzadeh, O. et al. (2022). "Landslide4Sense: Reference Benchmark Data and Deep Learning Models for Landslide Detection." IEEE Transactions on Geoscience and Remote Sensing (TGRS).*
-2. **Review tổng quan viễn thám:**  
-   *MDPI Remote Sensing (2024). "Deep Learning for Landslide Detection from Satellite Imagery: Advances and Challenges."*
-3. **nnU-Net Framework:**  
-   *Isensee, F. et al. (2021). "nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation." Nature Methods.*
+1. Ghorbanzadeh, O. et al. (2022). "Landslide4Sense: Reference Benchmark Data and Deep Learning Models for Landslide Detection." *IEEE Transactions on Geoscience and Remote Sensing (TGRS)*, 60, 1-17.
+2. Isensee, F. et al. (2021). "nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation." *Nature Methods*, 18(2), 203-211.
+3. Chen, L. C. et al. (2018). "Encoder-Decoder with Atrous Separable Convolution for Semantic Image Segmentation." *Proceedings of the European Conference on Computer Vision (ECCV)*.
 
 ---
-*Dự án được thực hiện và công bố bởi tác giả **Accnoname**. Mọi ý kiến đóng góp hoặc câu hỏi xin vui lòng mở Issue trên GitHub repository.*
+*Maintained by **Accnoname**. For issues, questions, or extensions, please open an Issue on the GitHub repository.*
