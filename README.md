@@ -29,15 +29,17 @@ Quantitative evaluation conducted on an independent validation split of 245 mult
 | **U-Net (ResNet34 Backbone / ResU-Net)** | **24.5M** | **74.21%** | **77.49%** | **75.77%** | **60.99%** | 266.9 FPS | Primary Champion Model (U-Net architecture with ResNet34 encoder) |
 | **DeepLabV3+ (ResNet34)** | 22.5M | 66.42% | 77.03% | 71.33% | 55.44% | **644.8 FPS** | Comparative Baseline (Large-scale rapid screening) |
 | **U-Net + TTA (8-Fold Inference)** | 24.5M | **77.58%** | 73.91% | 75.70% | 60.90% | 34.5 FPS | High-Precision Inference (Edge noise suppression) |
+| **FPN (Feature Pyramid Network / ResNet34)** | 23.2M | 68.29% | 58.92% | 63.26% | 46.27% | 312.4 FPS | Comparative Multi-Scale Model (Addition-based merging) |
 | **Published Benchmark ResU-Net (IEEE TGRS)** | — | 77.20% | 66.80% | 71.65% | 55.83% | — | Reference Benchmark Target (IEEE TGRS 2022) |
 | **Published Standard Plain U-Net (IEEE TGRS)** | — | ~70.5% | ~66.0% | 68.50% | 52.09% | — | Standard Conventional U-Net Baseline |
 
 ### Technical Analysis:
-1. **U-Net Encoder-Decoder Paradigm:** The model strictly adheres to the U-Net architecture (symmetrical Contracting Encoder and Expanding Decoder paths). By employing a ResNet-34 backbone as the encoder (commonly termed ResU-Net), residual skip connections mitigate vanishing gradients while full-depth long skip connections route fine spatial contours directly to the decoder.
-2. **Combo Loss Strategy:** Extreme class imbalance (landslides occupy less than 3% of spatial coverage) is effectively addressed using a composite objective:
+1. **U-Net vs. FPN Architectural Discrepancy:** U-Net outperforms FPN significantly (+12.51% F1 and +14.72% IoU). While FPN employs element-wise addition across downscaled pyramid levels (which induces feature blurring along fractured landslide scar boundaries), U-Net maintains full-depth channel concatenation (`torch.cat`), preserving uncompromised radiometric and topographic gradient details (ALOS DEM and Slope) across resolution scales.
+2. **U-Net Encoder-Decoder Paradigm:** The model strictly adheres to the U-Net architecture (symmetrical Contracting Encoder and Expanding Decoder paths). By employing a ResNet-34 backbone as the encoder (commonly termed ResU-Net), residual skip connections mitigate vanishing gradients while full-depth long skip connections route fine spatial contours directly to the decoder.
+3. **Combo Loss Strategy:** Extreme class imbalance (landslides occupy less than 3% of spatial coverage) is effectively addressed using a composite objective:
    $$\mathcal{L}_{\text{total}} = 0.6 \cdot \mathcal{L}_{\text{Dice}} + 0.4 \cdot \mathcal{L}_{\text{BCE}}$$
    The Dice component heavily penalizes false negatives, lifting Recall from 66.80% to 77.49%.
-3. **Mathematical Relationship between IoU and F1:**
+4. **Mathematical Relationship between IoU and F1:**
    $$\text{IoU} = \frac{F_1}{2 - F_1} \quad \Longleftrightarrow \quad F_1 = \frac{2 \cdot \text{IoU}}{1 + \text{IoU}}$$
    An IoU of 60.99% corresponds algebraically to an F1-Score of 75.77%. In geospatial segmentation, an IoU above 60% represents top-tier overlap accuracy.
 
