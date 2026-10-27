@@ -198,6 +198,8 @@ def main():
     parser.add_argument("--encoder", type=str, default="resnet34", help="Backbone encoder (mac dinh: resnet34)")
     parser.add_argument("--resume", type=str, default="", help="Duong dan checkpoint (.pth) de tiep tuc huan luyen")
     parser.add_argument("--save_all", action="store_true", help="Luu rieng checkpoint o moi epoch")
+    parser.add_argument("--augment", action="store_true", help="Bat tang cuong du lieu 2D (Data Augmentation) cho tap train")
+    parser.add_argument("--cache_data", action="store_true", help="Nap du lieu vao RAM de tang toc huan luyen")
 
     args = parser.parse_args()
     model_tag = f"{args.arch}_{args.encoder}"
@@ -216,11 +218,12 @@ def main():
     print(f"[MODEL]  Arch: {args.arch} | Encoder: {args.encoder} | Tag: {model_tag}")
     print(f"[VRAM]   Khoi diem: {get_gpu_memory()}")
     print(f"[CONFIG] Batch Size: {args.batch_size} | Epochs: {args.epochs} | Init LR: {args.lr}")
+    print(f"[AUGMENT] Data Augmentation: {args.augment} | Cache RAM: {args.cache_data}")
     print("[MEO GPU] Xem GPU trong Task Manager: Tab Performance -> GPU -> doi '3D' thanh 'Cuda'")
     print("="*70)
 
-    train_dataset = LandslideDataset(data_dir=args.train_img_dir, mask_dir=args.train_mask_dir)
-    val_dataset = LandslideDataset(data_dir=args.val_img_dir, mask_dir=args.val_mask_dir)
+    train_dataset = LandslideDataset(data_dir=args.train_img_dir, mask_dir=args.train_mask_dir, augment=args.augment, cache_in_memory=args.cache_data)
+    val_dataset = LandslideDataset(data_dir=args.val_img_dir, mask_dir=args.val_mask_dir, augment=False, cache_in_memory=args.cache_data)
 
     # Kiem tra chong ro ri du lieu (Data Leakage Assertion)
     train_files = set([os.path.basename(f) for f in train_dataset.image_files])
