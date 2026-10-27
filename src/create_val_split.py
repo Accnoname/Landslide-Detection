@@ -16,6 +16,10 @@ def create_labeled_val_split(train_dir="./data/processed/train", val_dir="./data
     os.makedirs(val_img_dir, exist_ok=True)
     os.makedirs(val_mask_dir, exist_ok=True)
 
+    if os.path.exists(val_img_dir) and len([f for f in os.listdir(val_img_dir) if f.endswith('.h5')]) >= 100:
+        print(f"[INFO] Tập Validation đã có sẵn {len(os.listdir(val_img_dir))} ảnh. Bỏ qua bước trích xuất!")
+        return
+
     # Lấy danh sách ảnh có kèm mask
     train_images = sorted([f for f in os.listdir(train_img_dir) if f.endswith('.h5')])
     
