@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import csv
 import argparse
@@ -200,8 +201,35 @@ def main():
     parser.add_argument("--save_all", action="store_true", help="Luu rieng checkpoint o moi epoch")
     parser.add_argument("--augment", action="store_true", help="Bat tang cuong du lieu 2D (Data Augmentation) cho tap train")
     parser.add_argument("--cache_data", action="store_true", help="Nap du lieu vao RAM de tang toc huan luyen")
+    parser.add_argument("--config", type=str, default="", help="Duong dan file cau hinh .yaml")
 
     args = parser.parse_args()
+
+    # Nap cau hinh tu file .yaml neu duoc truyen vao (CLI arguments luon co do uu tien cao hon)
+    if args.config and os.path.exists(args.config):
+        import yaml
+        print(f"[CONFIG FILE] Dang nap cau hinh tu: {args.config}")
+        with open(args.config, 'r', encoding='utf-8') as f:
+            cfg = yaml.safe_load(f)
+        
+        cli_args = sys.argv[1:]
+        def cli_has(flag):
+            return any(arg == flag or arg.startswith(f"{flag}=") for arg in cli_args)
+
+        if "data" in cfg:
+            if not cli_has("--train_img_dir"): args.train_img_dir = cfg["data"].get("train_img_dir", args.train_img_dir)
+            if not cli_has("--train_mask_dir"): args.train_mask_dir = cfg["data"].get("train_mask_dir", args.train_mask_dir)
+            if not cli_has("--val_img_dir"): args.val_img_dir = cfg["data"].get("val_img_dir", args.val_img_dir)
+            if not cli_has("--val_mask_dir"): args.val_mask_dir = cfg["data"].get("val_mask_dir", args.val_mask_dir)
+        if "model" in cfg:
+            if not cli_has("--arch"): args.arch = cfg["model"].get("architecture", args.arch).lower()
+            if not cli_has("--encoder"): args.encoder = cfg["model"].get("encoder_name", args.encoder)
+        if "training" in cfg:
+            if not cli_has("--epochs"): args.epochs = cfg["training"].get("epochs", args.epochs)
+            if not cli_has("--batch_size"): args.batch_size = cfg["training"].get("batch_size", args.batch_size)
+            if not cli_has("--lr"): args.lr = cfg["training"].get("learning_rate", args.lr)
+            if not cli_has("--num_workers"): args.num_workers = cfg["training"].get("num_workers", args.num_workers)
+
     model_tag = f"{args.arch}_{args.encoder}"
     
     ckpt_dir = os.path.join(args.output_dir, "checkpoints")
