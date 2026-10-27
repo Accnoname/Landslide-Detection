@@ -103,50 +103,45 @@ python src/create_val_split.py
 ```
 
 ### 5.3. Training
-* **Train ResU-Net Standard Pipeline (20 Epochs):**
+* **Train ResU-Net Standard Pipeline via YAML Configuration:**
   ```bash
-  python src/train.py --arch unet --encoder resnet34 --batch_size 16 --epochs 20
+  python train.py --config configs/baseline_resunet.yaml
+  ```
+
+* **Train Multi-Scale Feature Pyramid Network (FPN):**
+  ```bash
+  python train.py --config configs/fpn_resnet34.yaml
+  ```
+
+* **Train Nested Dense Skip Connections (UNet++):**
+  ```bash
+  python train.py --config configs/unetplusplus_resnet34.yaml
   ```
 
 * **Train with 2D Data Augmentation and In-Memory RAM Caching:**
   ```bash
-  python src/train.py --arch unet --encoder resnet34 --batch_size 32 --epochs 20 --augment --cache_data
-  ```
-
-* **Train DeepLabV3+ Comparison Model:**
-  ```bash
-  python src/train.py --arch deeplabv3plus --encoder resnet34 --batch_size 32 --epochs 20
-  ```
-
-* **Resume Training / Fine-Tuning from Checkpoint:**
-  ```bash
-  python src/train.py --resume results/checkpoints/unet_resnet34_best.pth --epochs 30 --lr 1e-5
+  python train.py --arch unet --encoder resnet34 --batch_size 32 --epochs 20 --augment --cache_data
   ```
 
 ### 5.4. Evaluation and Optimization
+* **Standard Evaluation and Metric Computation:**
+  ```bash
+  python evaluate.py --checkpoint results/checkpoints/unet_resnet34_best.pth
+  ```
+
 * **Decision Threshold Sensitivity Analysis (0.20 to 0.80):**
   ```bash
-  python src/tune_threshold.py --ckpt_path results/checkpoints/unet_resnet34_best.pth
+  python evaluate.py --checkpoint results/checkpoints/unet_resnet34_best.pth --tune_threshold
   ```
 
 * **Test-Time Augmentation (8-Fold Averaging):**
   ```bash
-  python src/evaluate_tta.py --ckpt_path results/checkpoints/unet_resnet34_best.pth
+  python evaluate.py --checkpoint results/checkpoints/unet_resnet34_best.pth --tta
   ```
 
-* **Multi-Model Benchmark Comparison:**
+* **Inference on Test Patches & Packaging Submission Archive:**
   ```bash
-  python src/compare_models.py
-  ```
-
-* **Five-Column Qualitative Error Map Generation:**
-  ```bash
-  python src/evaluate_and_visualize.py
-  ```
-
-* **Inference on 800 Unlabeled Test Patches & Packaging Submission Archive:**
-  ```bash
-  python src/predict_test.py
+  python predict.py --checkpoint results/checkpoints/unet_resnet34_best.pth
   ```
 
 ---
@@ -175,28 +170,31 @@ All metrics are evaluated at the global pixel level (micro-averaged over all val
 
 ```text
 Landslide-Detection/
-├── configs/
-│   └── baseline_resunet.yaml            # Standard hyperparameter configuration
-├── data/                                # Filtered by .gitignore
-│   ├── raw/                             # Archive downloads (TrainData.zip, ValidData.zip)
-│   └── processed/                       # Formatted train, val, test subdirectories
-├── results/
-│   ├── checkpoints/                     # Model weights (.pth)
-│   ├── plots/                           # Loss curves, tuning curves, visualization maps
-│   └── predictions/                     # Predicted binary masks (.h5)
-├── src/
-│   ├── dataset.py                       # PyTorch Dataset with RAM caching and 2D transforms
-│   ├── train.py                         # Multi-architecture training pipeline
-│   ├── tune_threshold.py                # Decision threshold calibration utility
-│   ├── evaluate_tta.py                  # 8-fold Test-Time Augmentation evaluator
-│   ├── compare_models.py                # Model benchmarking and plot generator
-│   ├── evaluate_and_visualize.py        # 5-column qualitative visual inspection
-│   ├── predict_test.py                  # Test set batch inference and zip compression
-│   ├── download_data.py                 # Direct dataset retrieval from Zenodo repository
-│   ├── create_val_split.py              # Independent validation subset partitioner
-│   └── utils/
-│       ├── losses.py                    # Composite loss definitions (Dice + BCE)
-│       └── metrics.py                   # Pixel-level confusion matrix metric computation
+├── configs/                             # Model hyperparameter configurations (YAML)
+│   ├── baseline_resunet.yaml
+│   ├── fpn_resnet34.yaml
+│   └── unetplusplus_resnet34.yaml
+├── docs/                                # Technical reports and guides
+│   └── TRAIN.md                         # End-to-end 7-step training mechanics guide
+├── src/                                 # Core source package
+│   ├── data/
+│   │   ├── dataset.py                   # 14-band DataLoader with RAM caching and 2D transforms
+│   │   └── download.py                  # Direct Zenodo dataset downloader
+│   ├── models/
+│   │   └── builder.py                   # Model architecture factory (U-Net, FPN, UNet++, DeepLabV3+)
+│   ├── utils/
+│   │   ├── losses.py                    # Composite ComboLoss (Dice + BCE)
+│   │   └── metrics.py                   # Pixel-level confusion matrix metric computation
+│   ├── postprocess/
+│   │   ├── tune_threshold.py            # Decision threshold calibration utility
+│   │   └── evaluate_tta.py              # 8-fold Test-Time Augmentation evaluator
+│   └── experiments/                     # Specialized experimental benchmarks
+│       ├── create_val_split.py          # Validation cohort partitioner
+│       ├── compare_models.py            # Cross-architecture benchmarking script
+│       └── nnunet/                      # Automated nnU-Net v2 pre-processing & training
+├── train.py                             # Root execution entrypoint for model training
+├── evaluate.py                          # Root execution entrypoint for evaluation and TTA
+├── predict.py                           # Root execution entrypoint for test inference
 ├── requirements.txt                     # Python package dependencies
 ├── run_on_colab.ipynb                   # Executable cloud launcher notebook
 ├── RESEARCH_NOTES.md                    # Research methodology and defense argumentation

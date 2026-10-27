@@ -9,6 +9,13 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+# Đảm bảo đường dẫn import luôn chuẩn xác dù chạy từ root hay từ src
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+for p in [current_dir, parent_dir]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 from dataset import LandslideDataset
 from utils.losses import ComboLoss
 from utils.metrics import calculate_metrics
@@ -184,7 +191,15 @@ def save_plots(history, save_path):
     plt.close()
 
 def main():
-    parser = argparse.ArgumentParser(description="Huấn luyện ResU-Net Phát hiện Sạt lở đất trên GPU")
+    # Ensure UTF-8 output on Windows consoles
+    for stream in [sys.stdout, sys.stderr]:
+        if hasattr(stream, 'reconfigure'):
+            try:
+                stream.reconfigure(encoding='utf-8')
+            except Exception:
+                pass
+
+    parser = argparse.ArgumentParser(description="Multi-Source Satellite Landslide Segmentation Training Pipeline")
     parser.add_argument("--train_img_dir", type=str, default="./data/processed/train/img")
     parser.add_argument("--train_mask_dir", type=str, default="./data/processed/train/mask")
     parser.add_argument("--val_img_dir", type=str, default="./data/processed/val/img")
@@ -195,13 +210,13 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--num_workers", type=int, default=2)
-    parser.add_argument("--arch", type=str, default="unet", choices=["unet", "deeplabv3plus", "fpn", "unetplusplus"], help="Kien truc mo hinh: unet, deeplabv3plus, fpn, unetplusplus")
-    parser.add_argument("--encoder", type=str, default="resnet34", help="Backbone encoder (mac dinh: resnet34)")
-    parser.add_argument("--resume", type=str, default="", help="Duong dan checkpoint (.pth) de tiep tuc huan luyen")
-    parser.add_argument("--save_all", action="store_true", help="Luu rieng checkpoint o moi epoch")
-    parser.add_argument("--augment", action="store_true", help="Bat tang cuong du lieu 2D (Data Augmentation) cho tap train")
-    parser.add_argument("--cache_data", action="store_true", help="Nap du lieu vao RAM de tang toc huan luyen")
-    parser.add_argument("--config", type=str, default="", help="Duong dan file cau hinh .yaml")
+    parser.add_argument("--arch", type=str, default="unet", choices=["unet", "deeplabv3plus", "fpn", "unetplusplus"], help="Model architecture: unet, deeplabv3plus, fpn, unetplusplus")
+    parser.add_argument("--encoder", type=str, default="resnet34", help="Backbone encoder (default: resnet34)")
+    parser.add_argument("--resume", type=str, default="", help="Path to checkpoint (.pth) to resume training")
+    parser.add_argument("--save_all", action="store_true", help="Save separate checkpoint at every epoch")
+    parser.add_argument("--augment", action="store_true", help="Enable 2D data augmentation for training")
+    parser.add_argument("--cache_data", action="store_true", help="Cache dataset into RAM for accelerated training")
+    parser.add_argument("--config", type=str, default="", help="Path to .yaml configuration file")
 
     args = parser.parse_args()
 

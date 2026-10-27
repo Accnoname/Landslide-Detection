@@ -1,0 +1,34 @@
+project:
+  name: "LandslideDetection"
+  experiment_name: "fpn_resnet34"
+  seed: 42
+
+data:
+  train_img_dir: "./data/processed/train/img"
+  train_mask_dir: "./data/processed/train/mask"
+  val_img_dir: "./data/processed/val/img"
+  val_mask_dir: "./data/processed/val/mask"
+  image_size: 128
+  in_channels: 14
+  num_classes: 1
+
+model:
+  architecture: "fpn"
+  encoder_name: "resnet34"
+  encoder_weights: null
+
+training:
+  epochs: 30
+  batch_size: 16
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  num_workers: 2
+
+loss:
+  type: "combo"
+  dice_weight: 0.6
+  bce_weight: 0.4
+
+output:
+  checkpoint_dir: "./results/checkpoints"
+  plots_dir: "./results/plots"

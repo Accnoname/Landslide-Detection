@@ -7,14 +7,15 @@ from torch.utils.data import DataLoader
 import segmentation_models_pytorch as smp
 from tqdm import tqdm
 
-from dataset import LandslideDataset
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+src_dir = os.path.join(project_root, "src")
+for p in [project_root, src_dir]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
-# Dam bao in tieng Viet tren terminal khong bi loi encoding
-if hasattr(sys.stdout, 'reconfigure'):
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
+from src.data.dataset import LandslideDataset
+from src.models.builder import build_model
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Đánh giá mô hình với kỹ thuật Test-Time Augmentation (TTA 8x)")
