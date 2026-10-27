@@ -1,0 +1,36 @@
+project:
+  name: "LandslideDetection"
+  experiment_name: "resunet_baseline"
+  seed: 42
+
+data:
+  train_img_dir: "./data/processed/train/img"
+  train_mask_dir: "./data/processed/train/mask"
+  val_img_dir: "./data/processed/val/img"
+  val_mask_dir: "./data/processed/val/mask"
+  image_size: 128
+  in_channels: 14
+  num_classes: 1
+
+model:
+  architecture: "Unet"
+  encoder_name: "resnet34"
+  encoder_weights: null  # Train từ đầu cho 14 kênh viễn thám
+
+training:
+  epochs: 40
+  batch_size: 16         # 16 cho card 4GB Quadro, 32 khi chạy Colab T4
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  num_workers: 2
+  mixed_precision: true  # fp16 tiết kiệm 50% VRAM
+  early_stopping_patience: 10
+
+loss:
+  type: "combo"          # Kết hợp Dice Loss + BCE để cải thiện Recall
+  dice_weight: 0.6
+  bce_weight: 0.4
+
+output:
+  checkpoint_dir: "./results/checkpoints"
+  plots_dir: "./results/plots"
