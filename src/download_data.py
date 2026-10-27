@@ -3,9 +3,10 @@ import shutil
 import glob
 
 def download_and_organize_dataset(target_data_dir="./data"):
-    # Ép buộc kagglehub tải cache về ổ D thay vì ổ C
-    os.environ["KAGGLEHUB_CACHE"] = "D:\\kagglehub_cache"
-    os.makedirs("D:\\kagglehub_cache", exist_ok=True)
+    # Nếu đang ở Windows và có ổ D thì lưu cache vào D:\ để không đầy ổ C
+    if os.path.exists("D:\\"):
+        os.environ["KAGGLEHUB_CACHE"] = "D:\\kagglehub_cache"
+        os.makedirs("D:\\kagglehub_cache", exist_ok=True)
 
     """
     Tải tập dữ liệu Landslide4Sense từ Kaggle qua kagglehub
